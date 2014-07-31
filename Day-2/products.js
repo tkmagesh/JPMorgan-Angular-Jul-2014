@@ -55,7 +55,17 @@ sort(products,productComparerByValue);
 console.table(products);
 
 //
-/*min(list,....)
+//min(list,....)
+//
+function min(list,fieldSelectorFn){
+	var result = fieldSelectorFn(list[0]);
+	for(var i=1;i<list.length;i++){
+		var val = fieldSelectorFn(list[i]);
+		if (result > val) result = val;
+	}
+	return result;
+}
+/*
 max(list,....)
 sum(list,....)
 avg(list,....)
@@ -64,13 +74,108 @@ filter(list,....)
 all(list,.....)
 any(list,....)
 
-groupBy(list,....)*/
+groupBy(list,....)
+*/
 
-/*
+function max(list,fieldSelectorFn){
+	var result = fieldSelectorFn(list[0]);
+	for(var i=1;i<list.length;i++){
+		var val = fieldSelectorFn(list[i]);
+		if (result < val) result = val;
+	}
+	return result;
+}
+
+function sum(list,fieldSelectorFn){
+	var result = 0;
+	for(var i=0;i<list.length;i++){
+		var val = fieldSelectorFn(list[i]);
+		result += val;
+	}
+	return result;
+}
+
+function filter(list, predicate){
+	var result = [];
+	for(var i=0;i<list.length;i++)
+		if (predicate(list[i]))
+			result.push(list[i]);
+	return result;
+}
+var costlyProductCriteriaFn = function(p){ return p.cost > 50;}
+var costlyProducts = filter(products,costlyProductCriteriaFn);
+console.log("Costly products [cost > 50]")
+console.table(costlyProducts);
+
+function all(list, predicate){
+	for(var i=0;i<list.length;i++)
+		if (!predicate(list[i]))
+			return false;
+	return true;
+}
+
+function any(list, predicate){
+	for(var i=0;i<list.length;i++)
+		if (predicate(list[i]))
+			return true;
+	return false;
+}
+
+function groupBy(list,fieldSelectorFn){
+	var result = {};
+	for(var i=0;i<list.length;i++){
+		var key = fieldSelectorFn(list[i]);
+		if (typeof result[key] === "undefined")
+			result[key] = [];
+		result[key].push(list[i]);
+	}
+	return result;
+}
+
+var categoryFieldSelectorFn = function(p){ return p.category; };
+
+var productsByCategory = groupBy(products, categoryFieldSelectorFn);
+console.table(productsByCategory[1]);
+console.table(productsByCategory[2]);
+
+function productsCategoryByCost(p){
+  return p.cost > 50 ? "costly" : "affordable";
+}
+var productsByCost = groupBy(products,productsCategoryByCost)
+console.table(productsByCost.affordable);
+console.table(productsByCost.costly);
+
+
 var categories = [
 	{id : 1, name : "Stationary"},
 	{id : 2, name : "Grocery"}
 ];
 
-join(products,categories,......)
-*/
+function join(leftList, rightList, leftKeyAttrName, rightKeyAttrName, mergeFn){
+	var result = [];
+	for(var i=0;i<leftList.length;i++){
+		var leftItem = leftList[i],
+			leftKey = leftItem[leftKeyAttrName];
+		for(var j=0;j<rightList.length;j++){
+			var rightItem = rightList[j],
+				rightKey = rightItem[rightKeyAttrName];
+			if (leftKey === rightKey){
+				result.push(mergeFn(leftItem,rightItem));
+			}
+		}
+	}
+	return result;
+}
+var productsWithCategoryNames = join(products,categories,"category","id",function(p,c){
+	return {id : p.id, name : p.name, cost : p.cost, units : p.units, category : c.name};
+});
+console.table(productsWithCategoryNames);
+
+function indexBy(list,iterator){
+	var fieldSelectorFn = typeof iterator === "function" ? iterator : function(item){ return item[iterator]};
+	var result = {};
+	for(var i=0;i<list.length;i++)
+		result[fieldSelectorFn(list[i])] = list[i];
+	
+	return result;
+}
