@@ -13,20 +13,64 @@
 			font-style: italic;
 			font-weight: bold;
 		}
+		.highlight{
+			background-color : yellow;
+		}
 	</style>
+	<script src="angular.js"></script>
+	<script>
+	function Task(taskName){
+		this.name = taskName;
+		this.isCompleted = false;
+	}
+	Task.prototype.toggleCompletion = function(){
+		this.isCompleted = !this.isCompleted;
+	}
+
+	function taskController($scope){
+		$scope.tasks = [];
+		$scope.addTask = function(taskName){
+			console.log($scope.taskType);
+			var task = new Task(taskName);
+			$scope.tasks.push(task);
+		};
+		$scope.removeCompleted = function(){
+			for(var i=$scope.tasks.length-1;i>=0;i--)
+				if ($scope.tasks[i].isCompleted)
+					$scope.tasks.splice(i,1);
+		};
+		$scope.getCompletedCount = function(){
+			return $scope.tasks.reduce(function(seed,t){
+				return t.isCompleted ? ++seed : seed;
+			},0);
+		};
+	}
+
+	</script>
 </head>
-<body>
+<body ng-app>
 	<h1>Task Manager</h1>
 	<hr>
-	<div class="content">
+	<div class="content" ng-controller="taskController">
 		<label for="">Task :</label>
-		<input type="text" name="" id="">
-		<input type="button" value="Add Task">
-		<input type="button" value="Remove Completed">
+		<input type="text" ng-model="newTask">
+		<select ng-model="taskType">
+			<option value="Personal">Personal</option>
+			<option value="Professional">Professional</option>
+		</select>
+		<input type="button" value="Add Task" ng-click="addTask(newTask,taskType)">
+		<input type="button" value="Remove Completed" ng-click="removeCompleted()" 
 		<ol>
-			<li>Task - 1</li>
-			<li class="completed">Task - 2</li>
+			<li ng-repeat="task in tasks"
+				ng-click="task.toggleCompletion()"
+				ng-class="{completed : task.isCompleted}">{{task.name}}</li>
 		</ol>
+		<div>
+			Total # of Tasks : {{tasks.length}}
+		</div>
+		<div>
+			# of Completed Tasks : {{getCompletedCount()}}
+		</div>
 	</div>
 </body>
 </html>
