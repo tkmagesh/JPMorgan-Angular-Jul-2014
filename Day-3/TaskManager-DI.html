@@ -34,6 +34,7 @@
 				this.id = defaults.id || -1;
 				this.name = defaults.name || "";
 				this.isCompleted = defaults.isCompleted || false;
+				this.createAt = defaults.createdAt || new Date();
 			}
 			Task.prototype.toggleCompletion = function(){
 				this.isCompleted = !this.isCompleted;
@@ -49,22 +50,22 @@
 	
 	
 	//Services
-	angular.module('taskApp').service('taskRepository', ['Task', '$window', function TaskRepository(T, $w){
+	angular.module('taskApp').service('taskRepository', ['Task', '$window', function TaskRepository(Task, $window){
 		this.addNew = function(taskName){
-			var newTask = new T({id : new Date().getTime(), name : taskName});
-			$w.localStorage.setItem(newTask.id.toString(), $w.JSON.stringify(newTask));
+			var newTask = new Task({id : new Date().getTime(), name : taskName});
+			$window.localStorage.setItem(newTask.id.toString(), $window.JSON.stringify(newTask));
 			return newTask;
 		},
 		this.remove = function(task){
-			$w.localStorage.removeItem(task.id.toString());
+			$window.localStorage.removeItem(task.id.toString());
 		},
 		this.getAll = function(){
 			var result = [];
-			for(var i=0;i<$w.localStorage.length;i++){
-				var key = $w.localStorage.key(i);
-				var taskAsString = $w.localStorage.getItem(key);
-				var newTaskData = $w.JSON.parse(taskAsString);
-				var newTask = new T(newTaskData);
+			for(var i=0;i<$window.localStorage.length;i++){
+				var key = $window.localStorage.key(i);
+				var taskAsString = $window.localStorage.getItem(key);
+				var newTaskData = $window.JSON.parse(taskAsString);
+				var newTask = new Task(newTaskData);
 				result.push(newTask);
 			}
 			return result;
@@ -143,7 +144,7 @@
 			<ol>
 				<li ng-repeat="task in tasks.list | filter:searchTask"
 					ng-click="task.toggleCompletion()"
-					ng-class="{completed : task.isCompleted}">{{task.name | limitName:nameLengthLimit}}</li>
+					ng-class="{completed : task.isCompleted}">{{task.name | limitName:nameLengthLimit}} - [created @ - {{task.createAt}}]</li>
 			</ol>
 			<div>
 				Total # of Tasks : {{tasks.list.length}}
