@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Task Manager</title>
+	<style>
+		li{
+			cursor: pointer;
+		}
+		.completed{
+			color : red;
+			text-decoration: line-through;
+			font-style: italic;
+			font-weight: bold;
+		}
+		.highlight{
+			background-color : yellow;
+		}
+		.messageContainer{
+			margin: 20px;
+			border : 2px solid black;
+			border-radius: 5px;
+			padding: 10px;
+			background-color: #e7e7e7;
+		}
+	</style>
+	<script src="angular.js"></script>
+	<script>
+
+	angular
+		.module('taskApp.models',[])
+		.factory('Task', function(){
+			function Task(taskName){
+				this.name = taskName;
+				this.isCompleted = false;
+			}
+			Task.prototype.toggleCompletion = function(){
+				this.isCompleted = !this.isCompleted;
+			}
+			return Task;	
+		});	
+
+	//Modules
+	angular.module('taskApp',['taskApp.models']);
+
+	//Factories
+	//angular.module('taskApp')
+	
+	
+
+
+	//Controllers
+
+	angular.module('taskApp').controller('mainController', function($scope){
+		$scope.commonData = {
+			message : "Default message!"
+		};
+	});
+
+	angular.module('taskApp').controller('taskController', function($scope,Task){
+		$scope.tasks = {
+			newTask : '',
+			taskType : '',
+			list : [],
+			addTask : function(){
+				var task = new Task(this.newTask);
+				this.list.push(task);
+				$scope.commonData.message = "A new task is added";
+			},
+			removeCompleted : function(){
+				for(var i=this.list.length-1;i>=0;i--)
+					if (this.list[i].isCompleted)
+						this.list.splice(i,1);
+			},
+			getCompletedCount : function(){
+				return this.list.reduce(function(seed,t){
+					return t.isCompleted ? ++seed : seed;
+				},0);
+			}
+		};
+	});
+
+	angular.module('taskApp').controller('messageController', function($scope){
+		$scope.clear = function(){
+			$scope.commonData.message = "";
+		}
+	});
+
+	</script>
+</head>
+<body ng-app="taskApp">
+	<h1>Task Manager</h1>
+	<div ng-controller="mainController">
+		<div ng-controller="taskController">
+			<hr>
+			Search : <input type="text" ng-model="searchTask.name" > 
+			Completed ? : <input type="checkbox" ng-model="searchTask.isCompleted">
+			<hr>
+			<label for="">Task :</label>
+			<input type="text" ng-model="tasks.newTask">
+			<select ng-model="tasks.taskType">
+				<option value="Personal">Personal</option>
+				<option value="Professional">Professional</option>
+			</select>
+			<input type="button" value="Add Task" ng-click="tasks.addTask()">
+			<input type="button" value="Remove Completed" ng-click="tasks.removeCompleted()">
+			<ol>
+				<li ng-repeat="task in tasks.list | filter:searchTask"
+					ng-click="task.toggleCompletion()"
+					ng-class="{completed : task.isCompleted}">{{task.name}}</li>
+			</ol>
+			<div>
+				Total # of Tasks : {{tasks.list.length}}
+			</div>
+			<div>
+				# of Completed Tasks : {{tasks.getCompletedCount()}}
+			</div>
+			
+		</div>
+		<div ng-controller="messageController" class="messageContainer">
+			<div>{{commonData.message}}</div>
+		</div>	
+	</div>
+	
+</body>
+</html>

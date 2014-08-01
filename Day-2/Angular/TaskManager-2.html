@@ -36,38 +36,37 @@
 	//Controllers
 
 	function mainController($scope){
-		var _message = "Default message";
-		$scope.setMessage = function(msg){
-			_message = msg;
-		}
-		$scope.getMessage = function(){
-			return _message;	
-		}
+		$scope.commonData = {
+			message : "Default message!"
+		};
 	}
 
 	function taskController($scope){
-		$scope.tasks = [];
-		$scope.addTask = function(taskName){
-			console.log($scope.taskType);
-			var task = new Task(taskName);
-			$scope.tasks.push(task);
-			$scope.setMessage("A new task is added");
-		};
-		$scope.removeCompleted = function(){
-			for(var i=$scope.tasks.length-1;i>=0;i--)
-				if ($scope.tasks[i].isCompleted)
-					$scope.tasks.splice(i,1);
-		};
-		$scope.getCompletedCount = function(){
-			return $scope.tasks.reduce(function(seed,t){
-				return t.isCompleted ? ++seed : seed;
-			},0);
+		$scope.tasks = {
+			newTask : '',
+			taskType : '',
+			list : [],
+			addTask : function(){
+				var task = new Task(this.newTask);
+				this.list.push(task);
+				$scope.commonData.message = "A new task is added";
+			},
+			removeCompleted : function(){
+				for(var i=this.list.length-1;i>=0;i--)
+					if (this.list[i].isCompleted)
+						this.list.splice(i,1);
+			},
+			getCompletedCount : function(){
+				return this.list.reduce(function(seed,t){
+					return t.isCompleted ? ++seed : seed;
+				},0);
+			}
 		};
 	}
 
 	function messageController($scope){
 		$scope.clear = function(){
-			$scope.setMessage("");
+			$scope.commonData.message = "";
 		}
 	}
 
@@ -75,32 +74,35 @@
 </head>
 <body ng-app>
 	<h1>Task Manager</h1>
-	<hr>
 	<div ng-controller="mainController">
-		<div class="content" ng-controller="taskController">
+		<div  ng-controller="taskController">
+			<hr>
+			Search : <input type="text" ng-model="searchTask.name" > 
+			Completed ? : <input type="checkbox" ng-model="searchTask.isCompleted">
+			<hr>
 			<label for="">Task :</label>
-			<input type="text" ng-model="newTask">
-			<select ng-model="taskType">
+			<input type="text" ng-model="tasks.newTask">
+			<select ng-model="tasks.taskType">
 				<option value="Personal">Personal</option>
 				<option value="Professional">Professional</option>
 			</select>
-			<input type="button" value="Add Task" ng-click="addTask(newTask,taskType)">
-			<input type="button" value="Remove Completed" ng-click="removeCompleted()" 
+			<input type="button" value="Add Task" ng-click="tasks.addTask()">
+			<input type="button" value="Remove Completed" ng-click="tasks.removeCompleted()">
 			<ol>
-				<li ng-repeat="task in tasks"
+				<li ng-repeat="task in tasks.list | filter:searchTask"
 					ng-click="task.toggleCompletion()"
 					ng-class="{completed : task.isCompleted}">{{task.name}}</li>
 			</ol>
 			<div>
-				Total # of Tasks : {{tasks.length}}
+				Total # of Tasks : {{tasks.list.length}}
 			</div>
 			<div>
-				# of Completed Tasks : {{getCompletedCount()}}
+				# of Completed Tasks : {{tasks.getCompletedCount()}}
 			</div>
-			<div>{{getMessage()}}</div>
+			
 		</div>
 		<div ng-controller="messageController" class="messageContainer">
-			<div>{{getMessage()}}</div>
+			<div>{{commonData.message}}</div>
 		</div>	
 	</div>
 	
