@@ -18,6 +18,11 @@
 					controller : 'employeesController',
 					templateUrl : 'employees.html'
 				})
+				.when('/something',{
+					template : function(){
+						return "<div>Something</div>";
+					}
+				})
 				.otherwise({
 					redirectTo : '/products/10'
 				});
