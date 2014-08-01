@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Task Manager</title>
+	<style>
+		li{
+			cursor: pointer;
+		}
+		.completed{
+			color : red;
+			text-decoration: line-through;
+			font-style: italic;
+			font-weight: bold;
+		}
+		.highlight{
+			background-color : yellow;
+		}
+		.messageContainer{
+			margin: 20px;
+			border : 2px solid black;
+			border-radius: 5px;
+			padding: 10px;
+			background-color: #e7e7e7;
+		}
+	</style>
+	<script src="angular.js"></script>
+	<script>
+
+	angular
+		.module('taskApp.models',[])
+		.factory('Task', function(){
+			function Task(defaults){
+				this.id = defaults.id || -1;
+				this.name = defaults.name || "";
+				this.isCompleted = defaults.isCompleted || false;
+				this.createAt = defaults.createdAt || new Date();
+			}
+			Task.prototype.toggleCompletion = function(){
+				this.isCompleted = !this.isCompleted;
+			}
+			return Task;	
+		});	
+
+	//Modules
+	angular.module('taskApp',['taskApp.models']);
+
+	//Factories
+	//angular.module('taskApp')
+	
+	
+	//Services
+	angular.module('taskApp').service('taskRepository', ['Task', '$q', '$window', '$http', function TaskRepository(Task, $q, $window, $http){
+		this.addNew = function(taskName){
+			var newTask = new Task({id : new Date().getTime(), name : taskName});
+			$window.localStorage.setItem(newTask.id.toString(), $window.JSON.stringify(newTask));
+			return newTask;
+		},
+		this.remove = function(task){
+			$window.localStorage.removeItem(task.id.toString());
+		},
+		this.getAll = function(){
+			var httpPromise = $http.get('/tasks');
+			var deferred = $q.defer();
+			httpPromise.success(function(result){
+				deferred.resolve(result.map(function(t){
+					return new Task(t);
+				}))
+			})
+			return deferred.promise;
+		}
+	}]);
+
+	//Controllers
+
+	angular.module('taskApp').controller('mainController', function($scope){
+		$scope.commonData = {
+			message : "Default message!"
+		};
+	});
+
+	angular.module('taskApp').controller('taskController', function($scope, taskRepository){
+		$scope.tasks = {
+			newTask : '',
+			taskType : '',
+			list : [],
+			addTask : function(){
+				var task = taskRepository.addNew(this.newTask);
+				//var task = new Task(this.newTask);
+				this.list.push(task);
+				$scope.commonData.message = "A new task is added";
+			},
+			removeCompleted : function(){
+				for(var i=this.list.length-1;i>=0;i--)
+					if (this.list[i].isCompleted){
+						taskRepository.remove(this.list[i]);
+						this.list.splice(i,1);
+					}
+			},
+			getCompletedCount : function(){
+				return this.list.reduce(function(seed,t){
+					return t.isCompleted ? ++seed : seed;
+				},0);
+			}
+		};
+		taskRepository.getAll().then(function(tasks){
+			$scope.tasks.list = tasks;
+		});
+	});
+
+	angular.module('taskApp').controller('messageController', function($scope){
+		$scope.clear = function(){
+			$scope.commonData.message = "";
+		}
+	});
+
+	//filters
+	angular.module('taskApp').filter('limitName',function(){
+		return function(data, limitLength){
+			data = data || "";
+			limitLength = limitLength || 30;
+			return data.length > limitLength ? data.substr(0,limitLength) + "..." : data;
+		}
+	});
+
+	</script>
+</head>
+<body ng-app="taskApp">
+	<h1>Task Manager</h1>
+	<div ng-controller="mainController">
+		<div ng-controller="taskController">
+			<hr>
+			Search : <input type="text" ng-model="searchTask.name" > 
+			Completed ? : <input type="checkbox" ng-model="searchTask.isCompleted">
+			Name Length : <input type="range" name="" id="" min="5" max="25" ng-model="nameLengthLimit"> <span>{{nameLengthLimit}}</span>
+			<hr>
+			<label for="">Task :</label>
+			<input type="text" ng-model="tasks.newTask">
+			<select ng-model="tasks.taskType">
+				<option value="Personal">Personal</option>
+				<option value="Professional">Professional</option>
+			</select>
+			<input type="button" value="Add Task" ng-click="tasks.addTask()">
+			<input type="button" value="Remove Completed" ng-click="tasks.removeCompleted()">
+			<ol>
+				<li ng-repeat="task in tasks.list | filter:searchTask"
+					ng-click="task.toggleCompletion()"
+					ng-class="{completed : task.isCompleted}">{{task.name | limitName:nameLengthLimit}} - [created @ - {{task.createAt}}]</li>
+			</ol>
+			<div>
+				Total # of Tasks : {{tasks.list.length}}
+			</div>
+			<div>
+				# of Completed Tasks : {{tasks.getCompletedCount()}}
+			</div>
+			
+		</div>
+		<div ng-controller="messageController" class="messageContainer">
+			<div>{{commonData.message}}</div>
+		</div>	
+	</div>
+	
+</body>
+</html>

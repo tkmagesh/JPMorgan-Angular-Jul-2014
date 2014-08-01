@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>Routing Demo</title>
+	<script src="angular.js"></script>
+	<script src="angular-route.js"></script>
+	<script>
+	angular
+		.module("myApp",['ngRoute'])
+		.config(function($routeProvider){
+			$routeProvider
+				.when('/products/:productId', {
+					controller : 'productsController',
+					templateUrl : 'products.html'
+				})
+				.when('/employees/:employeeId', {
+					controller : 'employeesController',
+					templateUrl : 'employees.html'
+				})
+				.otherwise({
+					redirectTo : '/products/10'
+				});
+		})
+		.controller('productsController',function($scope, $routeParams){
+			console.dir($routeParams);
+			$scope.productId = $routeParams.productId || 10;
+		})
+		.controller('employeesController', function($scope, $routeParams){
+			console.dir($routeParams);
+			$scope.employeeId = $routeParams.employeeId || 10;
+		});
+
+	</script>
+</head>
+<body ng-app="myApp">
+	<h1>MyApp</h1>
+	<hr>
+	<ng-view></ng-view>
+</body>
+</html>
